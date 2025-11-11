@@ -55,6 +55,14 @@ from walkgen_surface_processing.tools.geometry_utils import process_tess_results
 #         self.y = point[1]
 
 
+
+def polygon_area(points):
+	hull = ConvexHull([[point.x, point.y] for point in points])
+	return hull.area
+	# ~ x = [point.x for point in points]
+	# ~ y = [point.y for point in points]
+	# ~ return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+
 class DECOMPO_ALGO(Enum):
     Tess2 = 0
     Bayazit = 1
@@ -255,16 +263,18 @@ class ElevationMapInterface():
                 t1 = clock()
                 print("Params [ms] : ", 1000 * (t1 - t0))
                 wMl.translation[2] += self.offset_z
-
+				#TODO HARDCODED Remove HIGH OBSTACLES and small ones
+                if (polygon_area(inset.outer_boundary.points) < 0.5):
+                    continue
                 # No holes inside the planar region
                 if len(inset.holes) == 0:
                     # Decimate the number of points
                     try:
-                        print("--no-holes--")
+                        # ~ print("--no-holes--")
                         t0 = clock()
                         outer_boundary_simplify = self.simplify(inset.outer_boundary.points, self.threshold)
                         t1 = clock()
-                        print("Simplify  [ms] : ", 1000 * (t1 - t0))
+                        # ~ print("Simplify  [ms] : ", 1000 * (t1 - t0))
 
                         # import json
                         # filename = "/home/thomas_cbrs/Desktop/log_file_gazebo/debug/expe_02/poly_" + self.to_str_index(self.index_poly_json) + ".json"
@@ -302,25 +312,65 @@ class ElevationMapInterface():
                     # for hole in inset.holes :
                     #     print("size of hole : ", len(hole.points))
                     try:
-                        print("--holes--")
+                        print("--holes--", wMl)
                         # Decimate the number of points
-                        t0 = clock()
-                        polygon = self.simplify(inset.outer_boundary.points, self.threshold)
-                        t1 = clock()
-                        print("Simplify  [ms] : ", 1000 * (t1 - t0))
-
                         holes = []
                         t0 = clock()
-                        for hole in inset.holes:
-                            # Get convex hull (necessary for Tess, otherwise erros)
-                            if self.DECOMPO_ALGO == DECOMPO_ALGO.Tess2 or self.convexHoles:
-                                hole_hull = self.get_convexHUll(hole.points)
-                                # Decimate the remaining shape.
-                                holes.append(self.simplify(hole_hull, self.threshold))
-                            else:
-                                holes.append(self.simplify(hole.points, self.threshold))
-                        t1 = clock()
-                        print("Get-holes [ms] : ", 1000 * (t1 - t0))
+                        polygon = None
+                        if (wMl.translation[2] < 0.05): #TODO HARDCODED FLOOR HANDLING
+                            # ~ polygon = self.get_convexHUll(inset.outer_boundary.points) 
+                            polygon = self.simplify(inset.outer_boundary.points, self.threshold) 
+                            surfaces.append(self.toWorldFrame(polygon, wMl))
+                            t1 = clock()
+                            print("Get-holes [ms] : ", 1000 * (t1 - t0))
+                            t0 = clock()
+                            res = self.algorithm.decomposePoly(polygon, None)
+                            t1 = clock()
+                            print("Decompose [ms] : ", 1000 * (t1 - t0))
+						    
+                            t0 = clock()
+                            for polygon in res:
+                                surfaces.append(self.toWorldFrame(polygon, wMl))
+                            t1 = clock()
+                            print("WorldFram [ms] : ", 1000 * (t1 - t0))                       
+                        else:
+                            polygon = self.simplify(inset.outer_boundary.points, self.threshold)
+                            t1 = clock()
+                            print("Simplify  [ms] : ", 1000 * (t1 - t0))
+                            t0 = clock()
+                            for hole in inset.holes:
+                                # Get convex hull (necessary for Tess, otherwise erros)
+                                if self.DECOMPO_ALGO == DECOMPO_ALGO.Tess2 or self.convexHoles:
+                                    hole_hull = self.get_convexHUll(hole.points)
+                                    # Decimate the remaining shape.
+                                    holes.append(self.simplify(hole_hull, self.threshold))
+                                else:
+                                    holes.append(self.simplify(hole.points, self.threshold))
+                            t1 = clock()
+                            print("Get-holes [ms] : ", 1000 * (t1 - t0))
+                            t0 = clock()
+                            res = self.algorithm.decomposePoly(polygon, holes)
+                            t1 = clock()
+                            print("Decompose [ms] : ", 1000 * (t1 - t0))
+						    
+                            t0 = clock()
+                            for polygon in res:
+                                surfaces.append(self.toWorldFrame(polygon, wMl))
+                            t1 = clock()
+                            print("WorldFram [ms] : ", 1000 * (t1 - t0))
+
+                        # ~ holes = []
+                        # ~ t0 = clock()
+                        # ~ for hole in inset.holes:
+                            # ~ # Get convex hull (necessary for Tess, otherwise erros)
+                            # ~ if self.DECOMPO_ALGO == DECOMPO_ALGO.Tess2 or self.convexHoles:
+                                # ~ hole_hull = self.get_convexHUll(hole.points)
+                                # ~ # Decimate the remaining shape.
+                                # ~ holes.append(self.simplify(hole_hull, self.threshold))
+                            # ~ else:
+                                # ~ holes.append(self.simplify(hole.points, self.threshold))
+                        # ~ t1 = clock()
+                        # ~ print("Get-holes [ms] : ", 1000 * (t1 - t0))
 
                         # import json
                         # polygon_reshaped = [Point(point[0], point[1]) for point in self.earcut.removeHoles(polygon,holes)]
@@ -331,19 +381,22 @@ class ElevationMapInterface():
                         #     json.dump(polygon_reshaped_json, file)
                         # self.index_poly_json += 1
 
-                        t0 = clock()
-                        res = self.algorithm.decomposePoly(polygon, holes)
-                        t1 = clock()
-                        print("Decompose [ms] : ", 1000 * (t1 - t0))
+                        # ~ t0 = clock()
+                        # ~ res = self.algorithm.decomposePoly(polygon, holes)
+                        # ~ t1 = clock()
+                        # ~ print("Decompose [ms] : ", 1000 * (t1 - t0))
 
-                        t0 = clock()
-                        for polygon in res:
-                            surfaces.append(self.toWorldFrame(polygon, wMl))
-                        t1 = clock()
-                        print("WorldFram [ms] : ", 1000 * (t1 - t0))
+                        # ~ t0 = clock()
+                        # ~ for polygon in res:
+                            # ~ surfaces.append(self.toWorldFrame(polygon, wMl))
+                        # ~ t1 = clock()
+                        # ~ print("WorldFram [ms] : ", 1000 * (t1 - t0))
 
-                    except:
+                    except Exception as e:
                         print("Decomposition failed (with holes), algorithm used : " + self.DECOMPO_ALGO.name)
+                        print("Error:", e)
+                        import traceback
+                        traceback.print_exc()
                         from IPython import embed
                         embed()
                         if self.has_security:
