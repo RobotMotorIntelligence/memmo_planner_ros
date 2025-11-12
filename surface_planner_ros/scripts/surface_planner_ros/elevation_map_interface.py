@@ -318,8 +318,8 @@ class ElevationMapInterface():
                         t0 = clock()
                         polygon = None
                         if (wMl.translation[2] < 0.05): #TODO HARDCODED FLOOR HANDLING
-                            # ~ polygon = self.get_convexHUll(inset.outer_boundary.points) 
-                            polygon = self.simplify(inset.outer_boundary.points, self.threshold) 
+                            polygon = self.get_convexHUll(inset.outer_boundary.points) 
+                            # ~ polygon = self.simplify(inset.outer_boundary.points, self.threshold) 
                             surfaces.append(self.toWorldFrame(polygon, wMl))
                             t1 = clock()
                             print("Get-holes [ms] : ", 1000 * (t1 - t0))
