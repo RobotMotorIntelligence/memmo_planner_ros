@@ -261,11 +261,11 @@ class ElevationMapInterface():
                 t0 = clock()
                 wMl = self.fromMessageParameters(region.plane_parameters)
                 t1 = clock()
-                print("Params [ms] : ", 1000 * (t1 - t0))
+                # print("Params [ms] : ", 1000 * (t1 - t0))
                 wMl.translation[2] += self.offset_z
 				#TODO HARDCODED Remove HIGH OBSTACLES and small ones
-                if (polygon_area(inset.outer_boundary.points) < 0.5):
-                    continue
+                # if (polygon_area(inset.outer_boundary.points) < 0.5):
+                #     continue
                 # No holes inside the planar region
                 if len(inset.holes) == 0:
                     # Decimate the number of points
@@ -284,7 +284,9 @@ class ElevationMapInterface():
                         # self.index_poly_json += 1
                         # print("size of object : ", len(outer_boundary_simplify))
                         t0 = clock()
+                        print ("decomposePoly", self.DECOMPO_ALGO)
                         res = self.algorithm.decomposePoly(outer_boundary_simplify)
+                        print ("decomposePoly DONE")
                         t1 = clock()
                         print("Decompose [ms] : ", 1000 * (t1 - t0))
                         t0 = clock()
@@ -312,7 +314,7 @@ class ElevationMapInterface():
                     # for hole in inset.holes :
                     #     print("size of hole : ", len(hole.points))
                     try:
-                        print("--holes--", wMl)
+                        # print("--holes--", wMl)
                         # Decimate the number of points
                         holes = []
                         t0 = clock()
@@ -336,28 +338,35 @@ class ElevationMapInterface():
                         else:
                             polygon = self.simplify(inset.outer_boundary.points, self.threshold)
                             t1 = clock()
-                            print("Simplify  [ms] : ", 1000 * (t1 - t0))
+                            # print("Simplify  [ms] : ", 1000 * (t1 - t0))
                             t0 = clock()
                             for hole in inset.holes:
+                                print ("hole", self.DECOMPO_ALGO)
                                 # Get convex hull (necessary for Tess, otherwise erros)
                                 if self.DECOMPO_ALGO == DECOMPO_ALGO.Tess2 or self.convexHoles:
+                                    print ("get_convexHUll")
                                     hole_hull = self.get_convexHUll(hole.points)
                                     # Decimate the remaining shape.
+                                    print ("self.simplify(hole_hull, self.threshold")
                                     holes.append(self.simplify(hole_hull, self.threshold))
                                 else:
+                                    print ("self.simplify(hole_hull, self.threshold")
                                     holes.append(self.simplify(hole.points, self.threshold))
+                            print ("DONE HOLES")
                             t1 = clock()
-                            print("Get-holes [ms] : ", 1000 * (t1 - t0))
+                            # print("Get-holes [ms] : ", 1000 * (t1 - t0))
                             t0 = clock()
+                            print ("decomposePoly")
                             res = self.algorithm.decomposePoly(polygon, holes)
                             t1 = clock()
-                            print("Decompose [ms] : ", 1000 * (t1 - t0))
+                            # print("Decompose [ms] : ", 1000 * (t1 - t0))
 						    
+                            print ("decomposePoly DONE")
                             t0 = clock()
                             for polygon in res:
                                 surfaces.append(self.toWorldFrame(polygon, wMl))
                             t1 = clock()
-                            print("WorldFram [ms] : ", 1000 * (t1 - t0))
+                            # print("WorldFram [ms] : ", 1000 * (t1 - t0))
 
                         # ~ holes = []
                         # ~ t0 = clock()

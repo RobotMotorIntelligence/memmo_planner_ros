@@ -99,12 +99,12 @@ class SurfacePlannerNode():
         self._oMb = pinocchio.SE3(self._rot, np.zeros(3))
         self._mMb = pinocchio.SE3(self._rot, np.zeros(3))
 
-        if rospy.has_param(rospy.get_param("~initial_config")):
-            self._q = np.array(rospy.get_param(rospy.get_param("~initial_config")))
-            initial_height = rospy.get_param(rospy.get_param("~initial_floor_height"))
-        else:
-            # Get initial config & update server parameter.
-            self._q, initial_height = self.set_initial_configuration()
+        # if rospy.has_param(rospy.get_param("~initial_config")):
+        #     self._q = np.array(rospy.get_param(rospy.get_param("~initial_config")))
+        #     initial_height = rospy.get_param(rospy.get_param("~initial_floor_height"))
+        # else:
+        #     # Get initial config & update server parameter.
+        self._q, initial_height = self.set_initial_configuration()
 
         self._visualization = rospy.get_param("~visualization")
         self._footstep_manager_topic = rospy.get_param("~footstep_manager_topic")
@@ -243,6 +243,7 @@ class SurfacePlannerNode():
             polySize = 10
             convexHoles = False
             self.map_interface = ElevationMapInterface(threshold, polySize, DECOMPO_ALGO.Bayazit, convexHoles)
+            # self.map_interface = ElevationMapInterface(threshold, polySize, DECOMPO_ALGO.Tess2, convexHoles)
 
         self.footstep_manager_sub = rospy.Subscriber(self._footstep_manager_topic,
                                                      GaitStatusOnNewPhase,
@@ -265,25 +266,29 @@ class SurfacePlannerNode():
     def hull_marker_array_callback(self, msg):
         """ Filter and store incoming convex surfaces from plane_seg.
         """
-        print("\n -----Marker array received-----   \n")
+        # print("\n -----Marker array received-----   \n")
         t0 = clock()
         self.surfaces_processed = self.surface_processing.run(self._q[:3], msg)
         t1 = clock()
         if self._RECORDING:
             self._logger._profiler["timing_processing"].append(t1 - t0)
             self._logger._profiler["processing_number"].append(len(self.surfaces_processed.values()))
-        print("Process hull marker [ms] : ", 1000 * (t1 - t0))
+        # print("Process hull marker [ms] : ", 1000 * (t1 - t0))
         self.new_surfaces = True
         self.first_set_surfaces = True
         if self._visualization:
             surfaces = [np.array(value).T for key, value in self.surfaces_processed.items()]
-            msg = self.world_visualization.generate_surfaces(surfaces, frame_id=self.world_frame)
-            self.marker_array_pub.publish(msg)
+            if (len(surfaces) == 0):
+                print ("no surfaces !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            else:
+                msg = self.world_visualization.generate_surfaces(surfaces, frame_id=self.world_frame)
+                self.marker_array_pub.publish(msg)
 
     def elevation_map_callback(self, msg):
         """ Filter and store incoming planes which are non-convex coming
         from elevation_map_cupy.
         """
+        print("Process elevation map STARTED")
         t0 = clock()
         self.surfaces_processed = self.map_interface.process(msg)
         t1 = clock()

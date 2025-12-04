@@ -48,9 +48,9 @@ def main(args=None):
         raise KeyboardInterrupt
 
     # Spawn the MPC thread
-    signal.signal(signal.SIGINT, sig_int_handler)
-    t = threading.Thread(target=surface_planner_node)
-    t.start()
+    # signal.signal(signal.SIGINT, sig_int_handler)
+    # t = threading.Thread(target=surface_planner_node)
+    # t.start()
     rospy.spin()
 
 

@@ -223,8 +223,8 @@ void MemmoTeleopJoystick::send_cmd_vel(double vel_lin_x, double vel_lin_y, doubl
   cmd_vel_msg.angular.z = vel_ang_z;
   cmd_vel_pub_.publish(cmd_vel_msg);
 
-  ROS_INFO("\nvel_lin_x: %.4lf\n", cmd_vel_msg.linear.x);
-  ROS_INFO("vel_lin_y: %.4lf\n", cmd_vel_msg.linear.y);
+  ROS_INFO("vel_lin_x: %.4lf", cmd_vel_msg.linear.x);
+  ROS_INFO("vel_lin_y: %.4lf", cmd_vel_msg.linear.y);
   ROS_INFO("vel_lin_yaw: %.4lf\n", cmd_vel_msg.angular.z);
 }
 
