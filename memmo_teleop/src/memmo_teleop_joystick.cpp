@@ -111,6 +111,16 @@ void MemmoTeleopJoystick::timer_callback() {
 
 // Reference: http://wiki.ros.org/joy
 void MemmoTeleopJoystick::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
+
+  // === RESET VELOCITY ON BUTTON 3 ===
+  if (msg->buttons.at(3) > 0) {   // Y button (index 3)
+    vel_joystick_.setZero();
+    vel_filtered_.setZero();
+    ROS_WARN("Velocity reset to ZERO (button 3 pressed)");
+    return;  // skip everything else
+  }
+  // ==================================
+
   if (method_id_ == 0) {
     update_joystick_continuous(msg);
   }

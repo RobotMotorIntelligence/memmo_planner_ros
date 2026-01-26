@@ -309,6 +309,7 @@ class SurfacePlannerNode():
         """
         self.gait, self.gait_timings, self.footsteps, q_filter = self.footstep_manager_interface.writeFromMessage(msg)
         self.q_filter[:3] = q_filter[:3]
+        # self.q_filter[:3] = q_filter[:3] - np.array([0.335, 0.0, 0.0])
         self.q_filter[3:7] = pinocchio.Quaternion(pinocchio.rpy.rpyToMatrix(q_filter[3:])).coeffs()
 
         # Turn on planner
