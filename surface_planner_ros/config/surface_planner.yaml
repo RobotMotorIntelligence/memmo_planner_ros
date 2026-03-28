@@ -3,7 +3,7 @@ surface_planner:
   # Robot's current state and reference are expressed in the odom frame (a smooth frame that drifts with respect to the world frame).
   # The world frame is used to define the MPC tasks (e.g., footstep location), thus, it doesn't drift this frame.
   odom_frame: odom  # Use odom_frame is this param is empty
-  world_frame: point_cloud_odom  # Use odom_frame is this param is empty
+  world_frame: odom  # Use odom_frame is this param is empty
 
   # Define the topic name for subscrition and publication of the MPC node
   # Note that the robot state and MPC references needs to be expressed in the odom frame.
@@ -13,7 +13,7 @@ surface_planner:
 
   # Define the robot description: URDF, feet, nominal posture, locked joints, and armature
   joints_to_be_locked: [actuated_lidar_dynamixel]
-  robot_description: anymal_description
+  robot_description: robot_description
   # order matters! LF LH RF RH
   # 3d_feet: [LF_FOOT, LH_FOOT, RF_FOOT, RH_FOOT] # ANYmal
   3d_feet: [FL_foot, RL_foot, FR_foot, RR_foot]
@@ -21,19 +21,28 @@ surface_planner:
 
   ###################
   ### PlaneSeg parameters for postprocessing, using SurfaceProcessingParams()
-  plane_seg: false
+  plane_seg: true
 
   # Extract the scene as a single .stl file to post-process with hpp-affordance --> extract_methodId=0
   # Extract the scene as a multiple .stl files --> extract_methodId=1
   extract_methodId: 0
-  path: /home/thomas_cbrs/install/share/walkgen-environment-data/environments # Path to .stl file.
-  stl: /meshes/lab_scene.stl # File name. If method == 1 : folder name.
+  path: /home/walkgen-environments/environments # Path to .stl file.
+  stl: /meshes/flat_ground.stl # File name. If method == 1 : folder name.
 
-  margin_inner: 0.04  # Margin in [m] inside the convex surfaces (sfae footstep planinng)
+  #terrain - small
+  margin_inner: 0.06  # Margin in [m] inside the convex surfaces (sfae footstep planinng)
   margin_outer: 0.06  # Margin in [m] ouside the convex surfaces (collision avoidance)
-  n_points: 8  # Maximum Number of points for for each convex surface
+  #terrain - big
+  # margin_inner: 0.1 # Margin in [m] inside the convex surfaces (sfae footstep planinng)
+  # margin_outer: 0.25  # Margin in [m] ouside the convex surfaces (collision avoidance)
+  #stairs
+  # margin_inner: 0.08  # Margin in [m] ouside the convex surfaces (collision avoidance)
+  # margin_outer: 0.20  #stairs
+  # n_points: 5  # stairs
+  n_points: 4  # Maximum Number of points for for each convex surface
 
-  offset_z: 0.04 # Offset on the z-axis.
+  # offset_z: 0.025 # Offset on the z-axis.
+  offset_z: 0.012 # Offset on the z-axis. lower is more penetration
 
   # Method to remove the overlapping between surfaces :
   # 1. Run the list of surfaces starting with the lowest.
@@ -52,12 +61,12 @@ surface_planner:
   ####################
   ### Surface planner parameters, using SurfacePlannerParams()
   com: false  # Optimize CoM trajectory in SL1M
-  horizon: 8 # MAximum number of optimised fsteps.
+  horizon: 6 # MAximum number of optimised fsteps.
   N_phase_return: 3 # Number of surfaces returned by SL1M for each foot.
   # Heightmap
   fitsize_x: 10  # Number of point on x-axis (base frame) to evaluate the terrain height
   fitsize_y: 5  # Number of point on y-axis (base frame) to evaluate the terrain height
-  fitlength: 0.3  # Square size [m] around the position of the robot to evaluate the terrain height
+  fitlength: 0.3  # Square size [zzm] around the position of the robot to evaluate the terrain height
   recompute_slope: true  # Recompute the slope of the terrain for each contact phase configuration
   # Recording
   recording: false # Record timing in a .txt file

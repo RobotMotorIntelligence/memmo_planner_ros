@@ -111,6 +111,16 @@ void MemmoTeleopJoystick::timer_callback() {
 
 // Reference: http://wiki.ros.org/joy
 void MemmoTeleopJoystick::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
+
+  // === RESET VELOCITY ON BUTTON 3 ===
+  if (msg->buttons.at(3) > 0) {   // Y button (index 3)
+    vel_joystick_.setZero();
+    vel_filtered_.setZero();
+    ROS_WARN("Velocity reset to ZERO (button 3 pressed)");
+    return;  // skip everything else
+  }
+  // ==================================
+
   if (method_id_ == 0) {
     update_joystick_continuous(msg);
   }
@@ -223,8 +233,8 @@ void MemmoTeleopJoystick::send_cmd_vel(double vel_lin_x, double vel_lin_y, doubl
   cmd_vel_msg.angular.z = vel_ang_z;
   cmd_vel_pub_.publish(cmd_vel_msg);
 
-  ROS_INFO("\nvel_lin_x: %.4lf\n", cmd_vel_msg.linear.x);
-  ROS_INFO("vel_lin_y: %.4lf\n", cmd_vel_msg.linear.y);
+  ROS_INFO("vel_lin_x: %.4lf", cmd_vel_msg.linear.x);
+  ROS_INFO("vel_lin_y: %.4lf", cmd_vel_msg.linear.y);
   ROS_INFO("vel_lin_yaw: %.4lf\n", cmd_vel_msg.angular.z);
 }
 
